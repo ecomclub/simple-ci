@@ -39,7 +39,7 @@ func main() {
   // update repository source from remote
   cmdGitFetch := "git fetch --all"
   gitReset := "git reset --hard origin/"
-  cmdGitPull := fmt.Sprintf("%s%s", getReset, gitBranch)
+  cmdGitPull := fmt.Sprintf("%s%s", gitReset, gitBranch)
   // update NPM dependencies
   cmdNpm := "npm update"
 
