@@ -15,15 +15,19 @@ Variable              | Sample
 ## Endpoint
 
 ```http
-http://localhost:3000/?AppName=myapp&GitBranch=master
+http://localhost:3000/?AppName=myapp&GitBranch=master&Secret=123hash
+```
+
+### Proxy
+
+You should use a proxy server (_Nginx_) and handle this request
+from a simpler URL, eg.:
+
+```http
+https://myapp.myserver.com/deploy
 ```
 
 ## GitHub setup
 
 The simplest way to get it running is creating a **webhook** on GitHub
 repository after releases (recommended) or pushes.
-
-### Secret
-
-You should use a proxy server (Nginx) and check the `X-Hub-Signature`
-header sent by GitHub for a specific secret hash.

@@ -49,20 +49,23 @@ func main() {
     // app name from query string
     _app, ok := r.URL.Query()["AppName"]
     if !ok || len(_app) < 1 {
-      return clientError(w, []byte("No `AppName` query param!\n"))
+      clientError(w, []byte("No `AppName` query param!\n"))
+      return
     }
 
     // git branch to sync
     // eg.: 'production'
     _branch, ok := r.URL.Query()["GitBranch"]
     if !ok || len(_branch) < 1 {
-      return clientError(w, []byte("No `GitBranch` query param!\n"))
+      clientError(w, []byte("No `GitBranch` query param!\n"))
+      return
     }
 
     // secret to validate GitHub hook
     _secret, ok := r.URL.Query()["Secret"]
     if !ok || len(_secret) < 1 {
-      return clientError(w, []byte("No `Secret` query param!\n"))
+      clientError(w, []byte("No `Secret` query param!\n"))
+      return
     }
 
     app := _app[0]
@@ -71,19 +74,21 @@ func main() {
     dir := fmt.Sprintf("%s%s", appsRoot, app)
 
     // validate signature header and body
-    body, err := ioutil.ReadAll(req.Body)
+    body, err := ioutil.ReadAll(r.Body)
     if err != nil {
-      return clientError(w, []byte("Cannot handle the request body!\n"))
+      clientError(w, []byte("Cannot handle the request body!\n"))
+      return
     }
-    signature := req.Header.Get("x-hub-signature")
+    signature := r.Header.Get("x-hub-signature")
     if !signature || len(signature) == 0 {
-      return clientError(w, []byte("No signature header!\n"))
+      clientError(w, []byte("No signature header!\n"))
+      return
     }
 
     // handle hash validation
-    if !verifySignature(secret, signature, body) {
+    if !verifySignature([]byte(secret), signature, body) {
       w.WriteHeader(http.StatusUnauthorized)
-      w.Write()
+      w.Write([]byte("Unauthorized!\n"))
       return
     }
 
@@ -111,11 +116,10 @@ func main() {
   log.Fatal(http.ListenAndServe(port, nil))
 }
 
-func clientError(w http.ResponseWriter, msg []byte) nil {
+func clientError(w http.ResponseWriter, msg []byte) {
   // 400 response
   w.WriteHeader(http.StatusBadRequest)
   w.Write(msg)
-  return nil
 }
 
 // Reference:
