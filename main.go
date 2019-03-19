@@ -74,6 +74,10 @@ func main() {
     // execute commands
     cmd.Run()
 
+    log.Println("--> Deploy")
+    log.Println(dir)
+    log.Println(shCommand)
+
     success(w)
   })
 
