@@ -7,7 +7,7 @@ import (
   "os/exec"
   "fmt"
   "crypto/hmac"
-	"crypto/sha1"
+  "crypto/sha1"
   "encoding/hex"
   "strings"
   "io/ioutil"
