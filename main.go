@@ -80,7 +80,7 @@ func main() {
       return
     }
     signature := r.Header.Get("x-hub-signature")
-    if !signature || len(signature) == 0 {
+    if len(signature) == 0 {
       clientError(w, []byte("No signature header!\n"))
       return
     }
@@ -108,7 +108,8 @@ func main() {
     log.Println(dir)
     log.Println(shCommand)
 
-    success(w)
+    w.WriteHeader(http.StatusOK)
+    w.Write([]byte(dir))
   })
 
   log.Println("Listening...")
