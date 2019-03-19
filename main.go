@@ -6,6 +6,11 @@ import (
   "os"
   "os/exec"
   "fmt"
+  "crypto/hmac"
+	"crypto/sha1"
+  "encoding/hex"
+  "strings"
+  "io/ioutil"
 )
 
 func main() {
@@ -44,23 +49,43 @@ func main() {
     // app name from query string
     _app, ok := r.URL.Query()["AppName"]
     if !ok || len(_app) < 1 {
-      // no AppName query param
-      clientError(w)
-      return
+      return clientError(w, []byte("No `AppName` query param!\n"))
     }
 
     // git branch to sync
     // eg.: 'production'
     _branch, ok := r.URL.Query()["GitBranch"]
     if !ok || len(_branch) < 1 {
-      // no GitBranch query param
-      clientError(w)
-      return
+      return clientError(w, []byte("No `GitBranch` query param!\n"))
+    }
+
+    // secret to validate GitHub hook
+    _secret, ok := r.URL.Query()["Secret"]
+    if !ok || len(_secret) < 1 {
+      return clientError(w, []byte("No `Secret` query param!\n"))
     }
 
     app := _app[0]
     branch := _branch[0]
+    secret := _secret[0]
     dir := fmt.Sprintf("%s%s", appsRoot, app)
+
+    // validate signature header and body
+    body, err := ioutil.ReadAll(req.Body)
+    if err != nil {
+      return clientError(w, []byte("Cannot handle the request body!\n"))
+    }
+    signature := req.Header.Get("x-hub-signature")
+    if !signature || len(signature) == 0 {
+      return clientError(w, []byte("No signature header!\n"))
+    }
+
+    // handle hash validation
+    if !verifySignature(secret, signature, body) {
+      w.WriteHeader(http.StatusUnauthorized)
+      w.Write()
+      return
+    }
 
     // git reset command with received branch
     cmdGitPull := fmt.Sprintf("%s%s", gitReset, branch)
@@ -86,14 +111,32 @@ func main() {
   log.Fatal(http.ListenAndServe(port, nil))
 }
 
-func clientError(w http.ResponseWriter) {
+func clientError(w http.ResponseWriter, msg []byte) nil {
   // 400 response
   w.WriteHeader(http.StatusBadRequest)
-  w.Write([]byte("Bad Request!\n"))
+  w.Write(msg)
+  return nil
 }
 
-func success(w http.ResponseWriter) {
-  // 200 response
-  w.WriteHeader(http.StatusOK)
-  w.Write([]byte("OK!\n"))
+// Reference:
+// https://gist.github.com/rjz/b51dc03061dbcff1c521
+
+func signBody(secret, body []byte) []byte {
+	computed := hmac.New(sha1.New, secret)
+	computed.Write(body)
+	return []byte(computed.Sum(nil))
+}
+
+func verifySignature(secret []byte, signature string, body []byte) bool {
+	const signaturePrefix = "sha1="
+	const signatureLength = 45 // len(SignaturePrefix) + len(hex(sha1))
+
+	if len(signature) != signatureLength || !strings.HasPrefix(signature, signaturePrefix) {
+		return false
+	}
+
+	actual := make([]byte, 20)
+	hex.Decode(actual, []byte(signature[5:]))
+
+	return hmac.Equal(signBody(secret, body), actual)
 }
