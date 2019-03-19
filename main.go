@@ -24,7 +24,8 @@ func main() {
 
   // required env variables
   // TCP PORT number
-  port := os.Getenv("PORT")
+  // eg.: ':30000'
+  port := os.Getenv("TCP_PORT")
   // root apps directory
   appsRoot := os.Getenv("APPS_ROOT")
   // prefix for Systemd services
@@ -52,7 +53,7 @@ func main() {
     }
 
     app := _app[0]
-    dir := fmt.Sprintf("%s%s", root, app)
+    dir := fmt.Sprintf("%s%s", appsRoot, app)
     // command to restart app Systemd service
     cmdSystemd := fmt.Sprintf("systemctl restart %s%s", servicesPrefix, app)
     // merge all commands
