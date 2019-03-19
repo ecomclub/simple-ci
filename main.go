@@ -104,8 +104,8 @@ func main() {
     cmd := exec.Command("/bin/sh", "-c", shCommand)
     // move to app directory
     cmd.Dir = dir
-    // execute commands
-    cmd.Run()
+    // execute commands without waiting to complete
+    cmd.Start()
 
     w.WriteHeader(http.StatusOK)
     w.Write([]byte(dir))
