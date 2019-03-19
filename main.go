@@ -31,20 +31,17 @@ func main() {
   // prefix for Systemd services
   // eg.: 'node-' for 'node-{app}' services
   servicesPrefix := os.Getenv("SERVICES_PREFIX")
-  // Git branch to sync
-  // eg.: 'production'
-  gitBranch := os.Getenv("GIT_BRANCH")
 
   // commands to execute deployment
   // update repository source from remote
   cmdGitFetch := "git fetch --all"
   gitReset := "git reset --hard origin/"
-  cmdGitPull := fmt.Sprintf("%s%s", gitReset, gitBranch)
   // update NPM dependencies
   cmdNpm := "npm update"
 
   // setup HTTP client
   http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+    // app name from query string
     _app, ok := r.URL.Query()["AppName"]
     if !ok || len(_app) < 1 {
       // no AppName query param
@@ -52,8 +49,21 @@ func main() {
       return
     }
 
+    // git branch to sync
+    // eg.: 'production'
+    _branch, ok := r.URL.Query()["GitBranch"]
+    if !ok || len(_branch) < 1 {
+      // no GitBranch query param
+      clientError(w)
+      return
+    }
+
     app := _app[0]
+    branch := _branch[0]
     dir := fmt.Sprintf("%s%s", appsRoot, app)
+
+    // git reset command with received branch
+    cmdGitPull := fmt.Sprintf("%s%s", gitReset, branch)
     // command to restart app Systemd service
     cmdSystemd := fmt.Sprintf("systemctl restart %s%s", servicesPrefix, app)
     // merge all commands
