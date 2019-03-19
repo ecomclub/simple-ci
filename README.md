@@ -12,6 +12,12 @@ Variable              | Sample
 `SERVICES_PREFIX`     | `node-`
 `TCP_PORT`            | `:30000`
 
+## Endpoint
+
+```http
+http://localhost:3000/?AppName=myapp&GitBranch=master
+```
+
 ## GitHub setup
 
 The simplest way to get it running is creating a **webhook** on GitHub
