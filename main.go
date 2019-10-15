@@ -95,24 +95,30 @@ func main() {
       return
     }
 
-    // git reset command with received branch
-    cmdGitPull := fmt.Sprintf("%s%s", gitReset, branch)
-    // command to restart app Systemd service
-    cmdSystemd := fmt.Sprintf("systemctl restart %s%s", servicesPrefix, app)
-    // merge all commands
-    shCommand := fmt.Sprintf("%s && %s && %s && %s", cmdGitFetch, cmdGitPull, cmdNpm, cmdSystemd)
-    cmd := exec.Command("/bin/sh", "-c", shCommand)
-    // move to app directory
-    cmd.Dir = dir
-    // execute commands without waiting to complete
-    cmd.Start()
+    // check if directory exists first
+    if _, err := os.Stat(dir); !os.IsNotExist(err) {
+      // git reset command with received branch
+      cmdGitPull := fmt.Sprintf("%s%s", gitReset, branch)
+      // command to restart app Systemd service
+      cmdSystemd := fmt.Sprintf("systemctl restart %s%s", servicesPrefix, app)
+      // merge all commands
+      shCommand := fmt.Sprintf("%s && %s && %s && %s", cmdGitFetch, cmdGitPull, cmdNpm, cmdSystemd)
+      cmd := exec.Command("/bin/sh", "-c", shCommand)
+      // move to app directory
+      cmd.Dir = dir
+      // execute commands without waiting to complete
+      cmd.Start()
 
-    w.WriteHeader(http.StatusOK)
-    w.Write([]byte(dir))
+      log.Println("==> Deploy")
+      log.Println(dir)
+      log.Println(shCommand)
 
-    log.Println("==> Deploy")
-    log.Println(dir)
-    log.Println(shCommand)
+      w.WriteHeader(http.StatusOK)
+      w.Write([]byte(dir))
+    } else {
+      w.WriteHeader(http.StatusAccepted)
+      w.Write([]byte("Skip directory not found!\n"))
+    }
   })
 
   log.Println("Listening...")
