@@ -24,7 +24,14 @@ You should use a proxy server (_Nginx_) and handle this request
 from a simpler URL, eg.:
 
 ```http
-https://myapp.myserver.com/deploy
+https://myserver.com/myapp/deploy
+```
+
+```conf
+# nginx.conf
+location ~ ^\/(?<app>[a-z0-9-]+)\/deploy$ {
+  proxy_pass http://[::1]:3000/?Secret=SuperSecretPassword&AppName=$app&GitBranch=master;
+}
 ```
 
 ## GitHub setup
